@@ -63,5 +63,11 @@ zeroize = { version = "1.9", features = ["zeroize_derive"] }
 # (and praxis-policy-apl-core's `Effect::Parallel`). Leaf crate, no cycles back here.
 praxis-policy-orchestration = { workspace = true }
 
+# loom is pulled only under `--cfg loom` so default `cargo test` does not
+# compile `generator` / `cc`. Run the model with
+# `RUSTFLAGS='--cfg loom' cargo test -p praxis-policy-core --test loom_generation_snapshot`.
+[target.'cfg(loom)'.dev-dependencies]
+loom = { workspace = true }
+
 [lints]
 workspace = true

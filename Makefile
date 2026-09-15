@@ -40,6 +40,7 @@ help:
 	@echo ""
 	@echo "Test:"
 	@echo "  test              Run all workspace tests"
+	@echo "  test-tsan         Engine concurrency stress under ThreadSanitizer (nightly)"
 	@echo ""
 	@echo "Supply chain & coverage:"
 	@echo "  audit             cargo deny check (advisories, licenses, bans, sources)"
@@ -158,6 +159,19 @@ setup-hooks:
 test:
 	@$(CARGO) test --workspace
 	@$(CARGO) test --workspace --all-features
+
+# ThreadSanitizer on the engine concurrency stress test. Needs nightly, a
+# Linux target, and an instrumented libstd (`-Zbuild-std`). The sanitizer
+# does not run on the pinned stable toolchain or on macOS. `--test-threads=1`
+# keeps TSan's own reports from overlapping.
+.PHONY: test-tsan
+test-tsan:
+	@echo "ThreadSanitizer: praxis-policy-core engine concurrency ..."
+	@RUSTFLAGS="-Zsanitizer=thread" CARGO_INCREMENTAL=0 \
+		$(CARGO) +$(NIGHTLY) test -Zbuild-std=std,panic_abort \
+		-p praxis-policy-core --test engine_concurrency \
+		--target x86_64-unknown-linux-gnu -- --test-threads=1
+	@echo "test-tsan passed"
 
 # =============================================================================
 # Supply chain & coverage

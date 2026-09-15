@@ -77,5 +77,11 @@ praxis-policy-core = { path = ".", features = ["test-util"] }
 tokio = { workspace = true, features = ["test-util"] }
 tokio-util = { workspace = true }
 
+# loom is pulled only under `--cfg loom` so default `cargo test` does not
+# compile `generator` / `cc`. Run the model with
+# `RUSTFLAGS='--cfg loom' cargo test -p praxis-policy-core --test loom_generation_snapshot`.
+[target.'cfg(loom)'.dev-dependencies]
+loom = { workspace = true }
+
 [lints]
 workspace = true

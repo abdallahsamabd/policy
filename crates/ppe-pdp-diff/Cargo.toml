@@ -35,6 +35,8 @@ serde_yaml = { workspace = true }
 # feature only here keeps it off a normal build of this crate (and of every
 # workspace crate that depends on it).
 praxis-policy-apl-core = { workspace = true, features = ["test-util"] }
+praxis-policy-apl-cmf = { workspace = true }
+praxis-policy-core = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "test-util"] }
 
 [lints]

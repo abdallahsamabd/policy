@@ -2285,6 +2285,48 @@ mod tests {
     }
 
     #[test]
+    fn missing_key_matches_cmf_extensions_table() {
+        tracing::debug!(
+            "docs/content/cmf-extensions.md — APL missing-key row: \
+             presence/equality/membership/order are false; negated forms are true"
+        );
+        let bag = AttributeBag::new();
+        assert!(!eval_pred("authenticated", &bag));
+        assert!(!eval_pred(r#"subject.id == "alice""#, &bag));
+        assert!(!eval_pred(r#"subject.roles contains "hr""#, &bag));
+        assert!(!eval_pred("http.status > 0", &bag));
+        assert!(
+            eval_pred(r#"subject.id != "alice""#, &bag),
+            "!= on an absent key is true (duality with !(==))"
+        );
+        assert!(
+            eval_pred("!authenticated", &bag),
+            "negation of an absent key is true"
+        );
+        assert!(
+            eval_pred(r#"!(subject.id == "alice")"#, &bag),
+            "`!(...)` of a missing comparison is true"
+        );
+        assert!(
+            eval_pred("subject.type not in blocked_types", &bag),
+            "`not in` on a missing set is true"
+        );
+        let rule = crate::parser::parse_rule("require(authenticated)", "test")
+            .expect("require(authenticated) parses");
+        assert!(
+            matches!(evaluate_rules(&[rule], &bag), Decision::Deny { .. }),
+            "require(authenticated) fires on an empty bag"
+        );
+        let denylist =
+            crate::parser::parse_rule("require(subject.type not in blocked_types)", "test")
+                .expect("require(not in) parses");
+        assert!(
+            matches!(evaluate_rules(&[denylist], &bag), Decision::Allow),
+            "require(subject.type not in blocked_types) Allows: missing-key `not in` is true, so require does not fire"
+        );
+    }
+
+    #[test]
     fn missing_key_is_false() {
         let mut bag = AttributeBag::new();
         assert!(!eval_condition(
@@ -2299,7 +2341,7 @@ mod tests {
             },
             &bag
         ));
-        // Comparison on missing → false.
+        // Comparison on missing: equality is false; `!=` is a separate test.
         assert!(!eval_condition(
             &Condition::Comparison {
                 key: "missing".into(),

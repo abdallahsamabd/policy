@@ -22,7 +22,7 @@
     clippy::unwrap_used,
     clippy::print_stdout,
     clippy::print_stderr,
-    reason = "heap profile harness — prints findings for docs/benchmarks.md"
+    reason = "heap profile harness — prints findings for docs/dev/benchmarks.md"
 )]
 
 #[global_allocator]

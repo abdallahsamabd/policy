@@ -42,7 +42,7 @@ help:
 	@echo "  test              Run all workspace tests"
 	@echo "  test-tsan         Engine concurrency stress under ThreadSanitizer (nightly)"
 	@echo ""
-	@echo "Benchmarks (on demand — not part of make ci; see docs/benchmarks.md):"
+	@echo "Benchmarks (on demand — not part of make ci; see docs/dev/benchmarks.md):"
 	@echo "  bench             Criterion suite (ppe-benches / issue #19)"
 	@echo "  bench-percentiles p50/p95/p99 from target/criterion samples"
 	@echo "  bench-heap        dhat per-decision + policy-size footprint"
@@ -188,13 +188,13 @@ test-tsan:
 # Wall-clock benches do not gate PRs: CI runners are noisy and a flaky
 # p99 gate would train people to ignore failures. Workspace clippy
 # --all-targets plus a dhat-heap clippy pass compile every [[bench]]
-# (including heap_profile). See docs/benchmarks.md.
+# (including heap_profile). See docs/dev/benchmarks.md.
 
 .PHONY: bench
 bench:
 	@echo "Criterion suite (ppe-benches) — on demand, not a CI gate ..."
 	@$(CARGO) bench -p ppe-benches
-	@echo "HTML reports under target/criterion/; write-up in docs/benchmarks.md"
+	@echo "HTML reports under target/criterion/; write-up in docs/dev/benchmarks.md"
 
 .PHONY: bench-percentiles
 bench-percentiles:

@@ -74,9 +74,10 @@ perf record -g -F 99 -o perf.data -- \
 perf script | inferno-collapse-perf | inferno-flamegraph > flamegraph.svg
 ```
 
-Artifact checked into the repo:
-[`docs/flamegraph-full_decision-cedar_only.svg`](flamegraph-full_decision-cedar_only.svg)
-(open in a browser).
+The SVG is not checked in. A flamegraph is a point-in-time capture and goes
+stale as soon as the hot path changes, so regenerate it with the recipe above
+rather than reading a stored one. The distilled result is under **CPU profile
+findings**.
 
 On hosts without `perf`, the Criterion differential table under **CPU profile
 findings** remains a useful cross-check.
@@ -195,12 +196,13 @@ session rows still scale with their input and are unaffected.
 | Tool | `perf record -g -F 99` → `inferno-collapse-perf` → `inferno-flamegraph` |
 | Case | `full_decision/cedar_only` (APL + Cedar allow path) |
 | Binary | bench profile with `debug=1`, `strip=none`, frame pointers |
-| Samples | 1889 (`perf.data`); SVG: `docs/flamegraph-full_decision-cedar_only.svg` |
+| Samples | 1889 (`perf.data`); SVG not retained |
 
-**How to read the SVG:** a large share of samples sits in Criterion/rayon
+**What the capture showed:** a large share of samples sits in Criterion/rayon
 bootstrap worker threads (analysis after measurement). The **PPE hot path**
 is the stack under `ppe_benches::invoke_once` / `PolicyEngine::invoke_named`
-(~25% of process samples in this capture). Within that path:
+(~25% of process samples in this capture). Expect the same split when you
+regenerate. Within that path:
 
 | Frame (approx share of process samples) | Role |
 |-------------------------------------------|------|
@@ -303,5 +305,5 @@ Notes:
 | Suite under `crates/ppe-benches/` covering hook, full-decision, throughput, per-PDP | `hook_overhead`, `full_decision`, `throughput`, `pdp_cost` |
 | `make bench` | `Makefile` target `bench` |
 | Baseline numbers in `docs/` with hardware | this file (p50/p95/p99 via `bench-percentiles`) |
-| CPU + memory profiles + findings | `docs/flamegraph-full_decision-cedar_only.svg` + findings; `make bench-heap` |
+| CPU + memory profiles + findings | **CPU profile findings** (capture recipe + results); `make bench-heap` |
 | CI gate decision (+ threshold if gating) | **CI decision** section — not gating; threshold guidance if revisited |

@@ -7,7 +7,7 @@
 //!    set and session count grow (session taint sticks across requests).
 //! 2. **Policy-size sweep** — full decision latency as Cedar policy count grows.
 //! 3. **Optional dhat** — `cargo bench -p ppe-benches --features dhat-heap
-//!    --bench memory` writes `dhat-heap.json`. See `docs/benchmarks.md`.
+//!    --bench memory` writes `dhat-heap.json`. See `docs/dev/benchmarks.md`.
 //!    For isolated per-decision / policy-size heap numbers use
 //!    `--bench heap_profile` (requires `dhat-heap`).
 

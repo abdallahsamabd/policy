@@ -93,6 +93,9 @@ make bench-heap
 #    dhat-heap-per-decision.json and dhat-heap-policy-{1,10,50}.json
 ```
 
+Cargo runs bench binaries from the package root, so every dhat JSON lands in
+`crates/ppe-benches/`, not the workspace root. They are gitignored.
+
 `session_append_one` reseeds the store to exactly `n_labels` every iteration
 (`iter_batched` setup) and reports `Throughput::Elements(1)`. The row includes
 runtime entry overhead (`block_on`); compare shape against `session_load_labels`,
@@ -205,11 +208,14 @@ is the stack under `ppe_benches::invoke_once` / `PolicyEngine::invoke_named`
 
 - On the APL+Cedar path, **time is dominated by Cedar evaluate and its
   request/entity construction**, not by sequential no-op plugin dispatch.
-  Concurrent-mode plugin dispatch is a separate cost center (~40–70 µs).
+  Concurrent-mode plugin dispatch is a separate cost center (~40-70 µs
+  on the capture host).
 - YAML parse / Cedar **policy compile** do not appear on the hot stacks
   (they run in Criterion setup, outside timed iters) — matches the ticket.
 - WSL Criterion differentials (below) agree once hook registration is fixed:
-  sequential PDP ≫ sequential dispatch; concurrent-mode dispatch is not free.
+  sequential PDP ≫ sequential dispatch; concurrent-mode dispatch is not free
+  on that host. The sequential/concurrent ordering is not portable, see
+  below.
 
 **WSL cross-check (differentials, after hook-registration fix):**
 
@@ -217,11 +223,40 @@ is the stack under `ppe_benches::invoke_once` / `PolicyEngine::invoke_named`
 |-------|----------|---------|
 | Empty invoke | `hook_overhead/empty_registry` p50 ≈ 270 ns | Floor without plugins |
 | Sequential dispatch | `sequential/1` ≈ 1.0 µs → `sequential/16` ≈ 8.5 µs | Real no-op handler cost; scales with N |
-| Concurrent-mode dispatch | `concurrent/1` ≈ 40 µs → `concurrent/16` ≈ 71 µs | Concurrent executor path is far costlier than sequential |
+| Concurrent-mode dispatch | `concurrent/1` ≈ 40 µs → `concurrent/16` ≈ 71 µs | Concurrent executor path costs more than sequential on this host. Inverts elsewhere, see [Host sensitivity](#host-sensitivity-of-the-dispatch-rows) |
 | APL + plugin | `full_decision/plugin_only` p50 ≈ 5.8 µs vs `sequential/1` ≈ 1.0 µs | APL orchestration ≈ 4–5 µs over bare sequential dispatch |
 | Cedar eval | `pdp_cost/cedar` p50 ≈ 40 µs vs `cedar_only` p50 ≈ 58 µs | PDP dominates; APL tax ≈ 18 µs on Cedar path |
 | Session path | `full_decision_with_session_id` p50 ≈ 88 µs vs `plugin_then_cedar` ≈ 60 µs | Session hydrate/persist adds ~28 µs on this fixture |
 | PDP ranking | CEL ≪ Cedar ≈ OPA (same reader-role rule) | Dialect/runtime cost; fixtures aligned in `pdp_cost` |
+
+### Host sensitivity of the dispatch rows
+
+The `hook_overhead` rows are a property of the capture host, not of the
+engine. The sequential/concurrent ordering inverts between hosts.
+
+Apple Silicon (macOS 24.6, `rustc` 1.96.0), two consecutive runs:
+
+| Bench | WSL2 Ryzen (above) | Apple Silicon | Ratio |
+|-------|--------------------|---------------|-------|
+| `empty_registry` | 270 ns | 458 ns | 1.7x |
+| `sequential/1` | 1.04 µs | 8.63 µs | 8x |
+| `sequential/4` | 2.88 µs | 35.6 µs | 12x |
+| `sequential/16` | 8.48 µs | 150 µs | 18x |
+| `concurrent/1` | 39.8 µs | 9.29 µs | 0.23x |
+| `concurrent/4` | 46.9 µs | 10.9 µs | 0.23x |
+| `concurrent/16` | 70.7 µs | 26.5 µs | 0.37x |
+
+At N >= 4 concurrent dispatch is 3x to 6x cheaper than sequential here, the
+opposite of the WSL2 ordering. Same-host run-to-run drift is at most 9%, so
+the gap is not noise.
+
+The two machines are comparable for CPU-bound work: `pdp_cost/cedar_evaluate`
+agrees within 1% (40.3 µs vs 40.6 µs). Only the plugin-dispatch path diverges.
+Per-plugin sequential cost is about 8.7 µs here against about 0.5 µs on WSL2.
+That is the size of a cross-core task wakeup, but the cause is unconfirmed.
+
+Do not cite these rows as engine characteristics. Re-capture locally before
+using them to choose a plugin mode.
 
 ### Memory profile findings
 

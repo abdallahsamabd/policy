@@ -171,10 +171,17 @@ before refreshing these numbers.
 | Bench | input | p50 (approx) | observation |
 |-------|-------|--------------|-------------|
 | `memory/session_load_labels` | 8 / 64 / 512 | 115 ns / 1.58 µs / 12.8 µs | scales with label cardinality |
-| `memory/session_append_one` | 8 / 64 / 512 | ~0.46 / 2.1 / 16 µs (p50) | reseed each iter; includes `block_on` overhead |
+| `memory/session_append_one` | 8 / 64 / 512 | superseded, see below | reseed each iter; includes `block_on` overhead |
 | `memory/session_snapshot` | 10 / 100 / 1000 | 844 ns / 10.6 µs / 115 µs | scales with session count |
 | `memory/full_decision_with_session_id` | — | 88.4 µs (p50) | `YAML_PLUGIN_THEN_CEDAR` + session hydrate/persist |
 | `memory/policy_size_decision` | 1 / 10 / 50 policies | 58.2 / 67.0 / 103 µs | decision latency vs Cedar rule count |
+
+The `session_append_one` numbers previously recorded here (~0.46 / 2.1 / 16 µs)
+grew roughly 35x from 8 to 512 labels. The bench cannot produce that shape: the
+reseed moved into the `iter_batched` setup closure, which Criterion does not
+time, and appending one label is constant work regardless of how many are
+already present. The row needs a re-capture on the reference host. Both other
+session rows still scale with their input and are unaffected.
 
 ### CPU profile findings (captured flamegraph)
 

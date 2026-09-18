@@ -92,3 +92,5 @@ history.
   bundled plugins, decision points, session stores, and their features
 - [Testing](testing.md):
   testing a policy as code
+- [Benchmarks](benchmarks.md):
+  measuring the decision hot path, and reading the results

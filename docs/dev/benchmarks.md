@@ -4,6 +4,9 @@ This document is the acceptance write-up for the Criterion suite under
 `crates/ppe-benches/` (`ppe-benches`). It records **how to run**, **what each target
 measures**, **CI policy**, and **baseline / profile** results.
 
+To run the suite rather than read its results, see
+[Benchmarks](../content/benchmarks.md).
+
 **Framework:** Criterion **0.7** (`html_reports`, `async_tokio`).
 
 ## Framework choice

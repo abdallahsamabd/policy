@@ -58,9 +58,11 @@ fn profile_per_decision(rt: &Runtime) {
 
 fn profile_policy_size(rt: &Runtime, n_policies: usize) {
     let yaml = yaml_cedar_policy_count(n_policies);
-    let (mgr, _) = rt.block_on(engine_from_yaml(&yaml, None));
     let file_name = format!("dhat-heap-policy-{n_policies}.json");
+    // Profiler starts before the load: Cedar compile is the footprint this
+    // measures, so it has to be inside the profiled window.
     let _profiler = dhat::Profiler::builder().file_name(&file_name).build();
+    let (mgr, _) = rt.block_on(engine_from_yaml(&yaml, None));
     rt.block_on(invoke_once(&mgr, extensions_reader()));
     let stats = dhat::HeapStats::get();
     println!(

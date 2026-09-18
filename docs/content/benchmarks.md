@@ -18,8 +18,7 @@ operation, not load cost.
 | Python 3.10+ | `make bench-percentiles` |
 | Linux `perf` plus [inferno](https://github.com/jonhoo/inferno) | CPU profiles |
 
-`dhat` arrives through a Cargo feature, so heap profiling needs no system
-package.
+`dhat` is feature-gated and requires no system package.
 
 ## Targets
 
@@ -43,11 +42,9 @@ cargo bench -p ppe-benches --bench pdp_cost   # one target
 cargo bench -p ppe-benches -- --test          # run once each, no timing
 ```
 
-The `--test` form is the quick check that every bench still runs. It executes
-one iteration per case and skips measurement: a single target returns almost
-at once, the whole suite in well under a minute against several minutes for a
-measured run. Use it in a pre-push loop, and to confirm a fixture still
-reaches the outcome it expects after a policy or engine change.
+The `--test` form runs each case once without measuring it. Use it in a
+pre-push loop or to verify fixtures after a policy or engine change. A single
+target returns almost at once; the whole suite takes well under a minute.
 
 ## Reading the results
 
@@ -58,15 +55,15 @@ report with distribution and regression plots:
 open target/criterion/report/index.html
 ```
 
-Criterion reports mean and median but not tail latency. For percentiles across
-the sampled means:
+Criterion reports mean and median but not request-level tail latency. To
+calculate percentiles across its per-sample iteration means:
 
 ```console
 make bench-percentiles
 ```
 
-That prints a Markdown table of p50, p95, and p99 per case, suitable for
-pasting into an issue or a review.
+This prints a Markdown table of p50, p95, and p99 per case. These values
+describe the sample means, not individual-request latency.
 
 ## Comparing against a previous run
 
@@ -86,7 +83,7 @@ happened on the same host under the same conditions.
 
 ## Profiling
 
-A CPU profile answers where the time goes once a bench shows it is slow:
+Use a CPU profile to find where a slow benchmark spends its time:
 
 ```console
 BIN=target/release/deps/full_decision-*
@@ -127,9 +124,8 @@ Benchmarks do not gate pull requests. Wall-clock timing on shared runners is
 noise-dominated, and a flaky performance gate teaches people to ignore red
 builds.
 
-CI does compile them. `cargo clippy --all-targets`, plus a pass with the
-`dhat-heap` feature, builds every bench target, so the suite cannot rot
-unnoticed while nobody runs it.
+CI compiles every benchmark target with `cargo clippy --all-targets` and an
+additional pass with the `dhat-heap` feature.
 
 ## Related documentation
 

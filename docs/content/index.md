@@ -70,7 +70,7 @@ history.
   the same policy at a gateway, a sidecar, or in-framework
 - [Patterns](patterns.md):
   layered enforcement, shadow rollout, guardrails, least privilege
-- [Upgrading APL](../upgrade-apl.md):
+- [Upgrading APL](upgrade-apl.md):
   every key and form an existing configuration must rewrite
 
 ## Architecture
